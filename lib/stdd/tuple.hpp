@@ -16,7 +16,9 @@ template<typename Head, typename... Tail>
 class tuple<Head, Tail...> : public tuple<Tail...> {
     Head value;
 public:
-    tuple(const Head& head, const Tail&... tail) : value(head), tuple<Tail...>(tail...){}
+
+    template<typename THead, typename... TTail>
+    tuple(THead head, TTail&&... tail) : value(stdd::forward<THead>(head)), tuple<Tail...>(stdd::forward<TTail>(tail)...){}
 
     template<size_t ind>
     auto& get(){

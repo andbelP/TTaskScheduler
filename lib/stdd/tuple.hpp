@@ -1,41 +1,53 @@
 #pragma once
 
+#include <cstddef>
+
 namespace stdd{
     
 template<typename...> 
-class Tuple;
+class tuple;
 
 template<>
-class Tuple<>{
+class tuple<>{
 
 };
 
 template<typename Head, typename... Tail>
-class Tuple<Head, Tail...> : public Tuple<Tail...> {
+class tuple<Head, Tail...> : public tuple<Tail...> {
     Head value;
 public:
-    Tuple(const Head& head, const Tail&... tail) : value(head), Tuple<Tail...>(tail...){}
+    tuple(const Head& head, const Tail&... tail) : value(head), tuple<Tail...>(tail...){}
 
-    template<unsigned ind>
+    template<size_t ind>
     auto& get(){
         if constexpr(ind==0){
             return value;
         }
         else{
-            return static_cast<Tuple<Tail...>&>(*this).template get<ind-1>();
+            return static_cast<tuple<Tail...>&>(*this).template get<ind-1>();
         }
     }
 
-    template<unsigned ind>
+    template<size_t ind>
     const auto& get() const{
         if constexpr(ind==0){
             return value;
         }
         else{
-            return static_cast<const Tuple<Tail...>&>(*this).template get<ind-1>();
+            return static_cast<const tuple<Tail...>&>(*this).template get<ind-1>();
         }
     }
 };
+
+template<typename... Args, size_t ind>
+auto& get(tuple<Args...> t){
+    return t.template get<ind>();
+}
+
+template<typename... Args, size_t ind>
+const auto& get(const tuple<Args...> t){
+    return t.template get<ind>();
+}
 
 }
 

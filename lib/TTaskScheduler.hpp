@@ -54,9 +54,9 @@ class TTask {
     template <typename ResultType>
     ResultType getResultSync() {
         if constexpr (std::is_reference_v<ResultType>) {
-            return std::any_cast<ResultType>(task_->GetResultRef());
+            return stdd::any_cast<ResultType>(task_->GetResultRef());
         } else {
-            return std::any_cast<ResultType>(task_->GetResult());
+            return stdd::any_cast<ResultType>(task_->GetResult());
         }
     }
 

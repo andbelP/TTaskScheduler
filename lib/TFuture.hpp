@@ -9,21 +9,19 @@ class TFuture {
    public:
     TFuture(std::shared_ptr<ITask> task) : task_(task) {}
 
-    T get() const;
+    decltype(auto) get();
 };
 
 template <typename T>
-T TFuture<T>::get() const {
+decltype(auto) TFuture<T>::get() {
     if constexpr (std::is_lvalue_reference_v<T>) {
-        return std::any_cast<T>(task_->GetResultRef());
-    } else {
-        return std::any_cast<T>(task_->GetResult());
+        return stdd::any_cast<T>(task_->GetResultRef());
+    } else if constexpr (std::is_rvalue_reference_v<T>){
+        return stdd::any_cast<T>(task_->GetResultRValueRef());
+    }else {
+        return stdd::any_cast<T>(task_->GetResult());
     }
 }
-
-
-template <typename T>
-class TFuture;
 
 template <typename T>
 struct is_future {

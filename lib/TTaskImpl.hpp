@@ -1,6 +1,5 @@
 #pragma once
 
-#include <any>
 #include <functional>
 #include <type_traits>
 
@@ -9,33 +8,51 @@
 #include "stdd/tuple.hpp"
 #include "stdd/utils.hpp"
 #include "stdd/apply_unpack.hpp"
+#include "stdd/any.hpp"
 
 template <typename Func, typename... Args>
 class TTaskImpl : public ITask {
     Func f_;
     stdd::Tuple<std::decay_t<Args>...> args_;
-    std::any result_{};
+    stdd::any result_{};
     bool executed_ = false;
+    bool moved_ = false;
 
    public:
     template <typename TFunc, typename... TArgs>
     TTaskImpl(TFunc&& f, TArgs&&... args)
         : f_(stdd::forward<TFunc>(f)), args_(stdd::forward<TArgs>(args)...) {};
 
-    std::any& GetResultRef() override {
+    stdd::any& GetResultRef() override {
         if (!executed_) {
             Execute();
         }
-
+        if (moved_) {
+            throw std::runtime_error("Can't get result. Result is already moved.");
+        }
         return result_;
     }
 
-    std::any GetResult() override {
+    stdd::any&& GetResultRValueRef() override {
         if (!executed_) {
             Execute();
         }
+        if (moved_) {
+            throw std::runtime_error("Can't get result. Result is already moved.");
+        }
+        moved_=true;
+        return stdd::move(result_);
+    }
 
-        return std::move(result_);
+    stdd::any GetResult() override {
+        if (!executed_) {
+            Execute();
+        }
+        if (moved_) {
+            throw std::runtime_error("Can't get result. Result is already moved.");
+        }
+        moved_=true;
+        return stdd::move(result_);
     }
 
     void Execute() override {
@@ -45,7 +62,7 @@ class TTaskImpl : public ITask {
         else {
             result_ = stdd::ApplyAndUnpack(f_, args_);
         }
-        executed_ = true;
+            executed_ = true;
     }
 
     std::shared_ptr<ITask> Clone() const override {

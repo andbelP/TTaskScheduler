@@ -197,3 +197,174 @@ TEST(Scheduler, Empty) {
 
     scheduler.executeAll();
 }
+
+TEST(Scheduler, LambdaByValue) {
+    TTaskScheduler scheduler;
+
+    int value = 5;
+
+    auto task = scheduler.add(
+        [](int x) {
+            x += 10;
+            return x;
+        },
+        value
+    );
+
+    scheduler.executeAll();
+
+    ASSERT_EQ(task.getResultSync<int>(), 15);
+    ASSERT_EQ(value, 5);
+}
+
+TEST(Scheduler, LambdaByLvalueReference) {
+    TTaskScheduler scheduler;
+
+    int value = 5;
+
+    auto task = scheduler.add(
+        [](int& x) {
+            x += 10;
+            return x;
+        },
+        value
+    );
+
+    scheduler.executeAll();
+
+    ASSERT_EQ(task.getResultSync<int>(), 15);
+    ASSERT_EQ(value, 5);
+}
+
+
+TEST(Scheduler, LambdaByConstLvalueReference) {
+    TTaskScheduler scheduler;
+
+    std::string value = "abc";
+
+    auto task = scheduler.add(
+        [](const std::string& s) {
+            return s + "d";
+        },
+        value
+    );
+
+    scheduler.executeAll();
+
+    ASSERT_EQ(task.getResultSync<std::string>(), "abcd");
+    ASSERT_EQ(value, "abc");
+}
+
+
+TEST(Scheduler, LambdaByRvalueReference) {
+    TTaskScheduler scheduler;
+
+    auto task = scheduler.add(
+        [](std::string&& s) {
+            s += "!";
+            return s;
+        },
+        std::string("hello")
+    );
+
+    scheduler.executeAll();
+
+    ASSERT_EQ(task.getResultSync<std::string>(), "hello!");
+}
+
+TEST(Scheduler, LvalueRefAndMoveOnlyByValue) {
+    TTaskScheduler scheduler;
+
+    int value = 3;
+
+    auto task = scheduler.add(
+        [](int& x, std::unique_ptr<int> p) {
+            x += *p;
+            return x;
+        },
+        value,
+        std::make_unique<int>(7)
+    );
+
+    scheduler.executeAll();
+
+    ASSERT_EQ(task.getResultSync<int>(), 10);
+    ASSERT_EQ(value, 3);
+}
+
+TEST(Scheduler, ConstRefAndRvalueRef) {
+    TTaskScheduler scheduler;
+
+    std::string prefix = "hello";
+
+    auto task = scheduler.add(
+        [](const std::string& a, std::string&& b) {
+            return a + " " + b;
+        },
+        prefix,
+        std::string("world")
+    );
+
+    scheduler.executeAll();
+
+    ASSERT_EQ(task.getResultSync<std::string>(), "hello world");
+    ASSERT_EQ(prefix, "hello");
+}
+
+TEST(Scheduler, TemplateLambdaByValue) {
+    TTaskScheduler scheduler;
+
+    auto task = scheduler.add(
+        [](auto x) {
+            return x + 1;
+        },
+        41
+    );
+
+    scheduler.executeAll();
+
+    ASSERT_EQ(task.getResultSync<int>(), 42);
+}
+
+
+TEST(Scheduler, TemplateLambdaByLvalueReference) {
+    TTaskScheduler scheduler;
+
+    int value = 10;
+
+    auto task = scheduler.add(
+        [](auto& x) {
+            x += 5;
+            return x;
+        },
+        value
+    );
+
+    scheduler.executeAll();
+
+    ASSERT_EQ(task.getResultSync<int>(), 15);
+    ASSERT_EQ(value, 10);
+}
+
+
+TEST(Scheduler, templateLambdaMixedReferenceAndMoveOnly) {
+    TTaskScheduler scheduler;
+
+    int value = 3;
+
+    auto task = scheduler.add(
+        [](auto& x, auto p) {
+            x += *p;
+            return x;
+        },
+        value,
+        std::make_unique<int>(7)
+    );
+
+    scheduler.executeAll();
+
+    ASSERT_EQ(task.getResultSync<int>(), 10);
+    ASSERT_EQ(value, 3);
+}
+
+

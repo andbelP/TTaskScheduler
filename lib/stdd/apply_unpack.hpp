@@ -38,17 +38,26 @@ decltype(auto) Unpack(Arg&& arg) {
 }
 
 
+template<typename T>
+struct tuple_size;
 
-template <typename F, template<typename...> typename Tuple, typename... Args, std::size_t... Indxs>
-decltype(auto) apply_impl(F&& func, Tuple<Args...>&& tuple,
+template<typename... Args, template<typename...> typename Tuple>
+struct tuple_size<Tuple<Args...>> {
+    static constexpr std::size_t value = sizeof...(Args);
+};
+
+
+
+template <typename F, typename Tuple, std::size_t... Indxs>
+decltype(auto) apply_impl(F&& func, Tuple&& tuple,
                           index_sequence<Indxs...> indxs) {
-    return stdd::forward<F>(func)(Unpack(stdd::forward<Tuple<Args...>>(tuple).template get<Indxs>())...);
+    return stdd::forward<F>(func)(Unpack(stdd::forward<Tuple>(tuple).template get<Indxs>())...);
 }
 
-template <typename F, template<typename...> typename Tuple, typename... Args>
-decltype(auto) ApplyAndUnpack(F&& func, Tuple<Args...>&& tuple) {
-    return apply_impl(stdd::forward<F>(func), stdd::forward<Tuple<Args...>>(tuple),
-                      make_index_sequence<sizeof...(Args)>());
+template <typename F, typename Tuple>
+decltype(auto) ApplyAndUnpack(F&& func, Tuple&& tuple) {
+    return apply_impl(stdd::forward<F>(func), stdd::forward<Tuple>(tuple),
+                      make_index_sequence<tuple_size<std::remove_cvref_t<Tuple>>::value>());
 }
 
 }

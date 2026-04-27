@@ -55,6 +55,9 @@ class TTaskImpl : public ITask {
     }
 
     void Execute() override {
+        if(executed_){
+            return;
+        }
         if constexpr(std::is_same_v<void, decltype(stdd::InvokeAndUnpack(f_, stdd::move(args_)))>) {
             stdd::InvokeAndUnpack(f_, stdd::move(args_));
         }

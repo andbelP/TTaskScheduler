@@ -32,7 +32,11 @@ public:
     AnyHolder(ValType&& value) : value_(std::forward<ValType>(value)), type_info_(&typeid(std::decay_t<ValType>)){}
 
     std::unique_ptr<AnyBase> Clone() const override {
-        return std::make_unique<AnyHolder<T>>(value_);
+        if constexpr (std::is_copy_constructible_v<T>) {
+            return std::make_unique<AnyHolder<T>>(value_);
+        } else {
+            throw std::runtime_error("Can't copy move_only type");
+        }
     }
 
     const std::type_info* GetTypeInfo() const override{
@@ -56,7 +60,7 @@ public:
     requires (!std::is_same_v<std::remove_cvref_t<T>, any>)
     any(T&& obj) : ptr_(std::make_unique<AnyHolder<std::decay_t<T>>>(stdd::forward<T>(obj))){}
 
-    any(const any& other) : ptr_(other.ptr_->Clone()) {}
+    any(const any& other) : ptr_(other.ptr_ ? other.ptr_->Clone() : nullptr) {}
 
     any(any&& other) : ptr_(stdd::move(other.ptr_)){}
 
@@ -64,7 +68,7 @@ public:
         if(this==&other){
             return *this;
         }
-        ptr_ = other.ptr_->Clone();
+        ptr_ = other.ptr_ ? other.ptr_->Clone() : nullptr;
         return *this;
     }
 

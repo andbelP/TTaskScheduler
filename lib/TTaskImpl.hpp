@@ -58,11 +58,11 @@ class TTaskImpl : public ITask {
         if(executed_){
             return;
         }
-        if constexpr(std::is_same_v<void, decltype(stdd::InvokeAndUnpack(f_, stdd::move(args_)))>) {
-            stdd::InvokeAndUnpack(f_, stdd::move(args_));
+        if constexpr(std::is_same_v<void, decltype(stdd::InvokeAndUnpack(f_, args_))>) {
+            stdd::InvokeAndUnpack(f_, args_);
         }
         else {
-            result_ = stdd::InvokeAndUnpack(f_, stdd::move(args_));
+            result_ = stdd::InvokeAndUnpack(f_, args_);
         }
         executed_ = true;
     }

@@ -54,7 +54,7 @@ public:
 
     template<typename T>
     requires (!std::is_same_v<std::remove_cvref_t<T>, any>)
-    any(T&& obj) : ptr_(std::make_unique<AnyHolder<std::decay_t<T>>>(stdd::forward<T>(obj))){}\
+    any(T&& obj) : ptr_(std::make_unique<AnyHolder<std::decay_t<T>>>(stdd::forward<T>(obj))){}
 
     any(const any& other) : ptr_(other.ptr_->Clone()) {}
 

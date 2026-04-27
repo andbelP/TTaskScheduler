@@ -4,6 +4,7 @@
 
 #include "tuple.hpp"
 #include "utils.hpp"
+#include "invoke.hpp"
 
 
 namespace stdd{
@@ -49,14 +50,14 @@ struct tuple_size<Tuple<Args...>> {
 
 
 template <typename F, typename Tuple, std::size_t... Indxs>
-decltype(auto) apply_impl(F&& func, Tuple&& tuple,
+decltype(auto) InvokeAndUnpackImpl(F&& func, Tuple&& tuple,
                           index_sequence<Indxs...> indxs) {
-    return stdd::forward<F>(func)(Unpack(stdd::forward<Tuple>(tuple).template get<Indxs>())...);
+    return stdd::invoke(stdd::forward<F>(func), Unpack(stdd::forward<Tuple>(tuple).template get<Indxs>())...);
 }
 
 template <typename F, typename Tuple>
-decltype(auto) ApplyAndUnpack(F&& func, Tuple&& tuple) {
-    return apply_impl(stdd::forward<F>(func), stdd::forward<Tuple>(tuple),
+decltype(auto) InvokeAndUnpack(F&& func, Tuple&& tuple) {
+    return InvokeAndUnpackImpl(stdd::forward<F>(func), stdd::forward<Tuple>(tuple),
                       make_index_sequence<tuple_size<std::remove_cvref_t<Tuple>>::value>());
 }
 

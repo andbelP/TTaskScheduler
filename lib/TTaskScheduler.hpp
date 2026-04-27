@@ -20,15 +20,9 @@ class TTaskScheduler {
    public:
     TTaskScheduler() : lifetime_controller_(std::make_shared<int>(1)) {}
 
-    TTaskScheduler(const TTaskScheduler& other)
-        : lifetime_controller_(std::make_shared<int>(1)) {
-        tasks_.reserve(other.tasks_.size());
-        for (const auto& task : other.tasks_) {
-            tasks_.push_back(task->Clone());
-        }
-    }
+    TTaskScheduler(const TTaskScheduler& other) = delete;
 
-    TTaskScheduler& operator=(const TTaskScheduler& other) = delete; // TODO
+    TTaskScheduler& operator=(const TTaskScheduler& other) = delete;
 
     template <typename Func, typename... Args>
     TTask add(Func&& f, Args&&... args);
@@ -69,7 +63,6 @@ class TTask {
     TTask apply(Func&& f);
 };
 
-
 template <typename Func, typename... Args>
 TTask TTaskScheduler::add(Func&& f, Args&&... args) {
     tasks_.emplace_back(
@@ -86,5 +79,6 @@ TTask TTask::apply(Func&& f) {
             "Can't execute TTask method apply(Func&& f). TTaskScheduler is "
             "already dead");
     }
-    return scheduler_.add(stdd::forward<Func>(f), TFuture<stdd::first_func_argument_t<Func>>{task_});
+    return scheduler_.add(stdd::forward<Func>(f),
+                          TFuture<stdd::first_func_argument_t<Func>>{task_});
 }

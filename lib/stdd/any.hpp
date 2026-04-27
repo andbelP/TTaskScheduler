@@ -7,12 +7,13 @@ namespace stdd{
 
 class AnyBase{
 public:
+
     virtual ~AnyBase() = default;
 
     virtual std::unique_ptr<AnyBase> Clone() const = 0;
 
     virtual const std::type_info* GetTypeInfo() const = 0;
-    
+
 };
 
 class any;
@@ -22,8 +23,8 @@ class AnyHolder : public AnyBase{
     T value_;
     const std::type_info* type_info_;
 
-    template<typename Type>
-    friend Type any_cast(const any& val);
+    template<typename Type, typename Any>
+    friend Type any_cast(Any&& val);
 
 public:
 
@@ -43,8 +44,9 @@ public:
 class any{
     std::unique_ptr<AnyBase> ptr_;
 
-    template<typename T>
-    friend T any_cast(const any& val);
+    
+    template<typename T, typename Any>
+    friend T any_cast(Any&& val);
 
 public:
 
@@ -74,8 +76,8 @@ public:
 };
 
 
-template<typename T>
-T any_cast(const any& val){
+template<typename T, typename Any>
+T any_cast(Any&& val){
 
     if(!val.ptr_ || typeid(T) != *(val.ptr_->GetTypeInfo())){
         throw std::bad_cast{};
@@ -83,7 +85,11 @@ T any_cast(const any& val){
 
     auto* any_holder = static_cast<AnyHolder<std::decay_t<T>>*>(val.ptr_.get());
 
-    return std::forward<T>(any_holder->value_);
+    if constexpr (std::is_lvalue_reference_v<Any&&>) {
+        return static_cast<T>(any_holder->value_);
+    } else {
+        return static_cast<T>(stdd::move(any_holder->value_));
+    }
 
 }
 

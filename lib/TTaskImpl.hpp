@@ -12,7 +12,7 @@
 template <typename Func, typename... Args>
 class TTaskImpl : public ITask {
     Func f_;
-    stdd::Tuple<std::decay_t<Args>...> args_;
+    stdd::tuple<std::decay_t<Args>...> args_;
     stdd::any result_{};
     bool executed_ = false;
     bool moved_ = false;
@@ -55,16 +55,12 @@ class TTaskImpl : public ITask {
     }
 
     void Execute() override {
-        if constexpr(std::is_same_v<void, decltype(stdd::ApplyAndUnpack(f_, args_))>) {
-            stdd::ApplyAndUnpack(f_, args_);
+        if constexpr(std::is_same_v<void, decltype(stdd::ApplyAndUnpack(f_, stdd::move(args_)))>) {
+            stdd::ApplyAndUnpack(f_, stdd::move(args_));
         }
         else {
-            result_ = stdd::ApplyAndUnpack(f_, args_);
+            result_ = stdd::ApplyAndUnpack(f_, stdd::move(args_));
         }
-            executed_ = true;
-    }
-
-    std::shared_ptr<ITask> Clone() const override {
-        return std::make_shared<TTaskImpl<Func, Args...>>(*this);
+        executed_ = true;
     }
 };

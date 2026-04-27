@@ -8,8 +8,11 @@ namespace stdd{
 class AnyBase{
 public:
     virtual ~AnyBase() = default;
+
     virtual std::unique_ptr<AnyBase> Clone() const = 0;
+
     virtual const std::type_info* GetTypeInfo() const = 0;
+    
 };
 
 class any;
@@ -48,9 +51,13 @@ public:
     any() = default;
 
     template<typename T>
-    any(T&& obj) : ptr_(std::make_unique<AnyHolder<std::decay_t<T>>>(stdd::forward<T>(obj))){}
+    requires (!std::is_same_v<std::remove_cvref_t<T>, any>)
+    any(T&& obj) : ptr_(std::make_unique<AnyHolder<std::decay_t<T>>>(stdd::forward<T>(obj))){}\
+
     any(const any& other) : ptr_(other.ptr_->Clone()) {}
+
     any(any&& other) : ptr_(stdd::move(other.ptr_)){}
+
     any& operator=(const any& other){
         if(this==&other){
             return *this;
@@ -58,10 +65,12 @@ public:
         ptr_ = other.ptr_->Clone();
         return *this;
     }
+
     any& operator=(any&& other) {
         ptr_ = stdd::move(other.ptr_);
         return *this;
     }
+
 };
 
 

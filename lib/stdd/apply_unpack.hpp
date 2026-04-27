@@ -39,15 +39,15 @@ decltype(auto) Unpack(Arg&& arg) {
 
 
 
-template <typename F, typename... Args, std::size_t... Indxs>
-decltype(auto) apply_impl(F&& func, stdd::Tuple<Args...>& tuple,
+template <typename F, template<typename...> typename Tuple, typename... Args, std::size_t... Indxs>
+decltype(auto) apply_impl(F&& func, Tuple<Args...>&& tuple,
                           index_sequence<Indxs...> indxs) {
-    return stdd::forward<F>(func)(Unpack(tuple.template get<Indxs>())...);
+    return stdd::forward<F>(func)(Unpack(stdd::forward<Tuple<Args...>>(tuple).template get<Indxs>())...);
 }
 
-template <typename F, typename... Args>
-decltype(auto) ApplyAndUnpack(F&& func, stdd::Tuple<Args...>& tuple) {
-    return apply_impl(stdd::forward<F>(func), tuple,
+template <typename F, template<typename...> typename Tuple, typename... Args>
+decltype(auto) ApplyAndUnpack(F&& func, Tuple<Args...>&& tuple) {
+    return apply_impl(stdd::forward<F>(func), stdd::forward<Tuple<Args...>>(tuple),
                       make_index_sequence<sizeof...(Args)>());
 }
 

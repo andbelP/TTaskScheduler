@@ -93,3 +93,8 @@ TEST(Any, DoubleValue) {
     stdd::any a = 3.14;
     ASSERT_DOUBLE_EQ(stdd::any_cast<double>(a), 3.14);
 }
+
+TEST(Any, MoveOnlyArg) {
+    stdd::any a = std::make_unique<int>(5);
+    stdd::any b = std::move(a);
+}

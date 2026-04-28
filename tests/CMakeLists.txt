@@ -22,16 +22,10 @@ add_executable(
 
 target_link_libraries(
     scheduler-lib-tests
+    TTaskScheduler
     GTest::gtest_main
     GTest::gmock_main
 )
-
-target_include_directories(
-    scheduler-lib-tests
-    PRIVATE
-    ${CMAKE_SOURCE_DIR}/lib
-)
-
 
 include(GoogleTest)
 

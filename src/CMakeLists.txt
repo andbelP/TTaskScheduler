@@ -1,0 +1,2 @@
+add_subdirectory(RecommendApplication)
+add_subdirectory(TTaskScheduler)

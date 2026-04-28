@@ -8,8 +8,8 @@
 #include <utility>
 #include <vector>
 
-#include "TTaskScheduler.hpp"
-#include "stdd/tuple.hpp"
+#include "TTaskScheduler/TTaskScheduler.hpp"
+#include "TTaskScheduler/stdd/tuple.hpp"
 
 TEST(Scheduler, Value) {
     TTaskScheduler scheduler;

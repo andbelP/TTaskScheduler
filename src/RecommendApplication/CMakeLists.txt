@@ -18,3 +18,8 @@ target_link_libraries(RecommendApp
     nlohmann_json::nlohmann_json
 )
 
+target_include_directories(RecommendApp
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/
+)
+

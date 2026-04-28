@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "Geoposition.hpp"
+#include "geoposition.hpp"
 
 struct InterestingPlace{
     Geoposition geoposition;

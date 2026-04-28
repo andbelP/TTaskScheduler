@@ -1,10 +1,8 @@
 #pragma once
 
 enum class WeatherType{
-    kRain,
-    kSnow,
-    kSunny,
-    kCloudy
+    kWalkable,
+    kNotWalkable
 };
 
 struct Weather{

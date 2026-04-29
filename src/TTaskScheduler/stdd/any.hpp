@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <typeinfo>
+#include <stdexcept>
 #include <type_traits>
 #include "utils.hpp"
 

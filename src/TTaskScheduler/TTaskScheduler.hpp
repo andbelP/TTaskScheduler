@@ -36,7 +36,7 @@ class TTaskScheduler {
 
 #include "TTask.hpp"
 
-inline TTask::TTask(std::shared_ptr<ITask> task, TTaskScheduler& scheduler) : task_(std::move(task)), scheduler_(scheduler), scheduler_lifetime_controller_(scheduler.lifetime_controller_) {}
+inline TTask::TTask(std::shared_ptr<ITask> task, TTaskScheduler& scheduler) : task_(stdd::move(task)), scheduler_(scheduler), scheduler_lifetime_controller_(scheduler.lifetime_controller_) {}
 
 template <typename Func, typename... Args>
 TTask TTaskScheduler::add(Func&& f, Args&&... args) {

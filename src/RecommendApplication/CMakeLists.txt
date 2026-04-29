@@ -1,4 +1,11 @@
-add_executable(RecommendApp main.cpp application/application.cpp)
+add_executable(RecommendApp main.cpp 
+    application/application.cpp 
+    api_clients/http_client/cpr_http_client.cpp
+    api_clients/weather_client/openweathermap_client.cpp
+    api_clients/geo_by_ip_client/twoip_client.cpp
+    api_clients/maps_client/overpass_client.cpp
+    api_clients/distance_client/OSRM_client.cpp
+)
 
 
 include(FetchContent)

@@ -5,9 +5,9 @@
 
 #include "models/geoposition.hpp"
 
-class ITwoIpClient{
+class IIpGeoPosClient{
 public:
     virtual std::expected<Geoposition, std::string> Get() const = 0;
     
-    virtual ~ITwoIpClient() = default;
+    virtual ~IIpGeoPosClient() = default;
 };

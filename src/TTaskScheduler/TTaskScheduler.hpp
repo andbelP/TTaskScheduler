@@ -41,8 +41,7 @@ inline TTask::TTask(std::shared_ptr<ITask> task, TTaskScheduler& scheduler) : ta
 template <typename Func, typename... Args>
 TTask TTaskScheduler::add(Func&& f, Args&&... args) {
     tasks_.emplace_back(
-        std::make_shared<TTaskImpl<std::remove_cvref_t<Func>,
-                                   std::remove_reference_t<Args>...>>(
+        std::make_shared<TTaskImpl<std::remove_cvref_t<Func>, Args...>>(
             stdd::forward<Func>(f), stdd::forward<Args>(args)...));
     return TTask{*(tasks_.end() - 1), *this};
 }

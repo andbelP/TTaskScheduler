@@ -8,11 +8,12 @@
 #include "stdd/utils.hpp"
 #include "stdd/apply_unpack.hpp"
 #include "stdd/any.hpp"
+#include "stdd/argument.hpp"
 
 template <typename Func, typename... Args>
 class TTaskImpl : public ITask {
     Func f_;
-    stdd::tuple<std::decay_t<Args>...> args_;
+    stdd::tuple<stdd::Argument<Args>...> args_;
     stdd::any result_{};
     bool executed_ = false;
     bool moved_ = false;

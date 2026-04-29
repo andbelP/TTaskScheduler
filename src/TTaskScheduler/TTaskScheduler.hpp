@@ -34,34 +34,9 @@ class TTaskScheduler {
     }
 };
 
-class TTask {
-    std::shared_ptr<ITask> task_;
-    TTaskScheduler& scheduler_;
-    std::weak_ptr<int> scheduler_lifetime_controller_;
+#include "TTask.hpp"
 
-   public:
-    TTask(std::shared_ptr<ITask> task, TTaskScheduler& scheduler)
-        : task_(task),
-          scheduler_(scheduler),
-          scheduler_lifetime_controller_(scheduler.lifetime_controller_) {};
-
-    template <typename ResultType>
-    ResultType getResultSync() {
-        if constexpr (std::is_reference_v<ResultType>) {
-            return stdd::any_cast<ResultType>(task_->GetResultRef());
-        } else {
-            return stdd::any_cast<ResultType>(task_->GetResult());
-        }
-    }
-
-    template <typename ResultType>
-    TFuture<ResultType> getFutureResult() {
-        return TFuture<ResultType>(task_);
-    }
-
-    template <typename Func>
-    TTask apply(Func&& f);
-};
+inline TTask::TTask(std::shared_ptr<ITask> task, TTaskScheduler& scheduler) : task_(std::move(task)), scheduler_(scheduler), scheduler_lifetime_controller_(scheduler.lifetime_controller_) {}
 
 template <typename Func, typename... Args>
 TTask TTaskScheduler::add(Func&& f, Args&&... args) {

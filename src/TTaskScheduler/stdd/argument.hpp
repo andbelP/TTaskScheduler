@@ -13,7 +13,7 @@ public:
     Argument(TArg&& value) : value_(stdd::forward<TArg>(value)) {}
 
     decltype(auto) Unpack(){
-        if constexpr(is_future_v<T>){
+        if constexpr(is_future_v<value_type>){
             return value_.get();
         }
         else{

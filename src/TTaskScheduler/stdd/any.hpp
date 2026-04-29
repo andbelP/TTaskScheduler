@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <type_traits>
 #include "utils.hpp"
 
 namespace stdd{
@@ -29,7 +30,7 @@ class AnyHolder : public AnyBase{
 public:
 
     template<typename ValType>
-    AnyHolder(ValType&& value) : value_(std::forward<ValType>(value)), type_info_(&typeid(std::decay_t<ValType>)){}
+    AnyHolder(ValType&& value) : value_(stdd::forward<ValType>(value)), type_info_(&typeid(std::decay_t<ValType>)){}
 
     std::unique_ptr<AnyBase> Clone() const override {
         if constexpr (std::is_copy_constructible_v<T>) {

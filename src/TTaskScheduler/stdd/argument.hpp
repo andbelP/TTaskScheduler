@@ -3,7 +3,6 @@
 #include "TTaskScheduler/TFuture.hpp"
 #include "TTaskScheduler/stdd/utils.hpp"
 
-namespace stdd{
 
 template<typename T>
 class Argument{
@@ -27,5 +26,3 @@ public:
         }
     }
 };
-
-}

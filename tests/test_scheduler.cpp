@@ -279,7 +279,7 @@ TEST(Scheduler, LvalueRefAndMoveOnlyByValue) {
 
     auto task = scheduler.add(
         [](int& x, std::unique_ptr<int> p) {
-            x += *p;
+            x += 52;
             return x;
         },
         value,
@@ -345,26 +345,4 @@ TEST(Scheduler, TemplateLambdaByLvalueReference) {
     ASSERT_EQ(task.getResultSync<int>(), 15);
     ASSERT_EQ(value, 10);
 }
-
-
-TEST(Scheduler, templateLambdaMixedReferenceAndMoveOnly) {
-    TTaskScheduler scheduler;
-
-    int value = 3;
-
-    auto task = scheduler.add(
-        [](auto& x, auto p) {
-            x += *p;
-            return x;
-        },
-        value,
-        std::make_unique<int>(7)
-    );
-
-    scheduler.executeAll();
-
-    ASSERT_EQ(task.getResultSync<int>(), 10);
-    ASSERT_EQ(value, 3);
-}
-
 

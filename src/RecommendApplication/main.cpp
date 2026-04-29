@@ -14,6 +14,11 @@
             N = std::stoi(std::string(argv[1]));
         }
 
+        if(N <= 0){
+            std::cerr << "Invalid number of places: " << N << "\n";
+            return 1;
+        }
+
         auto raw_2ip_api_key = std::getenv("IP2_API_KEY");
 
         if (raw_2ip_api_key == nullptr || std::string(raw_2ip_api_key).empty()) {

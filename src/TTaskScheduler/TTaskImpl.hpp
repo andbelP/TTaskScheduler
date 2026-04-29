@@ -13,7 +13,7 @@
 template <typename Func, typename... Args>
 class TTaskImpl : public ITask {
     Func f_;
-    stdd::tuple<stdd::Argument<Args>...> args_;
+    stdd::tuple<Argument<Args>...> args_;
     stdd::any result_{};
     bool executed_ = false;
     bool moved_ = false;
@@ -59,11 +59,11 @@ class TTaskImpl : public ITask {
         if(executed_){
             return;
         }
-        if constexpr(std::is_same_v<void, decltype(stdd::InvokeAndUnpack(f_, args_))>) {
-            stdd::InvokeAndUnpack(f_, args_);
+        if constexpr(std::is_same_v<void, decltype(UnpackAndInvoke(f_, args_))>) {
+            UnpackAndInvoke(f_, args_);
         }
         else {
-            result_ = stdd::InvokeAndUnpack(f_, args_);
+            result_ = UnpackAndInvoke(f_, args_);
         }
         executed_ = true;
     }

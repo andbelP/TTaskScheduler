@@ -275,7 +275,7 @@ TEST(Scheduler, LambdaByRvalueReference) {
 TEST(Scheduler, LvalueRefAndMoveOnlyByValue) {
     TTaskScheduler scheduler;
 
-    int value = 3;
+    int value = 17;
 
     auto task = scheduler.add(
         [](int& x, std::unique_ptr<int> p) {
@@ -288,8 +288,8 @@ TEST(Scheduler, LvalueRefAndMoveOnlyByValue) {
 
     scheduler.executeAll();
 
-    ASSERT_EQ(task.getResultSync<int>(), 10);
-    ASSERT_EQ(value, 3);
+    ASSERT_EQ(task.getResultSync<int>(), 69);
+    ASSERT_EQ(value, 17);
 }
 
 TEST(Scheduler, ConstRefAndRvalueRef) {

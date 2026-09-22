@@ -1,23 +1,14 @@
-# Лабораторная работа 9
+# Task Scheduler
 
-Планировщик задач
+Task Scheduler is a C++ library for building and executing computation graphs (a DAG: Directed Acyclic Graph) composed of typed tasks with explicit dependencies. It lets you declare tasks, wire their inputs to the outputs of other tasks, and execute the minimal required subset when results are requested.
 
-## Задача
+## Overview
 
-Вашей задачей будет разработать класс, отвечающий за выполнение задач и выставление взаимосвязей между ними (фактически это класс для построения [DAG](https://en.wikipedia.org/wiki/Directed_acyclic_graph)). 
+Many real-world problems can be expressed as a computation graph where nodes are tasks and edges are data dependencies. This library provides a class named `TTaskScheduler` to declare such graphs and run them deterministically.
 
-Для 1 и 2 потока также необходимо будет реализовать приложение, рекомендующее места отдыха в зависимости от местоположения и погодных условий.
-
-Часто, чтобы решить какую-либо задачу, требуется выполнить граф вычислений, где узел графа — это задача, а ребро — связь между результатом выполнения одной задачи и параметром для запуска другой. Вам предстоит разработать класс **TTaskScheduler**, решающий подобную задачу.
-
-Такой класс помогает понятно разбить задачу по этапам и построить взаимосвязь между этапами исполнения.
-
-Допустим, существует задача: посчитать средний балл в группах. На вход подаются 2 [csv](https://en.wikipedia.org/wiki/Comma-separated_values) файла: `(isu, gpa)` и `(group, isu)`
-
-Вот так мог бы выглядеть код для решения данной задачи с помощью TTaskScheduler
+Below is a simple example: computing average GPA per group from two CSV files `(isu, gpa)` and `(group, isu)`.
 
 ```cpp
-
 TTaskScheduler scheduler;
 
 auto students = scheduler.add(
@@ -57,17 +48,17 @@ auto groups = scheduler.add(
     "groups.csv"
 );
 
-// Берём ссылку: таких future result можно получить много раз
+// Take a reference: such future results can be obtained many times
 auto studentsFuture =
     students.getFutureResult<const std::unordered_map<int, int>&>();
-// Берём значение, ожидаем только move, никаких copy, соответственно get можно вызвать единожды
+// Take by value: move-only, no copies; therefore get() can be called exactly once
 auto groupsFuture =
     groups.getFutureResult<std::unordered_map<std::string, std::vector<int>>>();
 
 auto groupGpa = scheduler.add(
     [](
         const std::unordered_map<int, int>& gpaByIsu,
-        std::unordered_map<std::string, std::vector<int>> groupToIsus // ждём, что нам мувнут
+        std::unordered_map<std::string, std::vector<int>> groupToIsus // expect move
     ) {
         std::unordered_map<std::string, int> gpaByGroup;
         for (const auto& [group, isus] : groupToIsus) {
@@ -99,96 +90,68 @@ groupGpa.apply(
 
 scheduler.executeAll();
 
-// Так делать нельзя, потому что уже мувнули, ожидаем exception
+// This is invalid because we already moved; expect an exception
 // groupsFuture.get()
 
-// Так можно
+// This is OK
 const std::unordered_map<int, int>& gpaByIsu = studentsFuture.get();
-
 ```
 
-### Публичный интерфейс `TTaskScheduler`
+## Public API: TTaskScheduler
 
- - **add** &mdash; принимает в качестве аргумента задание и его аргументы. Возвращает объект `TTask`, описывающий добавленную таску.
- - **executeAll** &mdash; выполняет все запланированные задания
- 
-### Публичный интерфейс `TTask`
- - **getResultSync<T>** &mdash; возвращает результат выполнения задания определённого типа. Вычисляет его, если он ещё не вычислен; при этом не происходит вычисления ненужных заданий
- - **getFutureResult<T>** &mdash; возвращает объект, из которого в будущем можно получить результат задания (фактически ничего не вычисляя), с типом результата T
- 
-    Если просят T, то ожидается, что объект "переместим".
-    Очевидно, что результат future можно "переместить" только единожды, поэтому при последующих обращениях стоит выбрасывать исключение.
+- add - Takes a callable task and its arguments. Returns a `TTask` describing the scheduled task.
+- executeAll - Executes all scheduled tasks.
 
-    Если просят `cv T&`, то отдаём соответствующую ссылку.
-    Также очевидно, что таких ссылок можно получить любое количество.
- - **apply** &mdash; принимает в качестве аргумента задание. Возвращает объект `TTask`. 
- 
-    Аргументы для задания передаются от предыдущего задания (см. [Требования и ограничения к заданиям](#требования-и-ограничения-к-заданиям))
-    
-    Также apply может принимать как по rvalue, так и по lvalue ссылке.
+## Public API: TTask
 
-### Публичный интерфейс `TFuture`
- - Реализуется на ваше усмотрение; главное, что в зависимости от способа создания этой TFuture (см. выше getFutureResult) выполняется перемещение или берется ссылка.
+- getResultSync<T> - Returns the result of the task of type T. If the result is not computed yet, computes it without evaluating unrelated tasks.
+- getFutureResult<T> - Returns an object that can later yield the result of the task (without triggering computation immediately), typed as T.
+  If T is requested by value, the object is expected to be movable. A future result can be moved only once; subsequent attempts should throw an exception.
+  If `cv T&` is requested, a reference is returned. Any number of references can be obtained.
+- apply - Takes a callable and returns a `TTask`. Arguments for the callable are provided from the previous task output (see Task Requirements below). `apply` should support both rvalue and lvalue callables.
 
-### Требования и ограничения к заданиям
+## Public API: TFuture
 
-  - [Callable object](https://en.cppreference.com/w/cpp/named_req/Callable)
-  - Количество аргументов &mdash; любое.
-  - Задание может быть указателем на метод класса. В таком случае первый аргумент — объект класса, у которого будет вызван метод.
-  - `task.apply(func)` может быть применено только тогда, если `func` принимает ровно один аргумент
-  
-    По желанию можно реализовать `apply` для `func` от любого числа аргументов. Это возможно, например, если `task` возвращает `std::tuple<Ts...>`
+- The exact implementation is up to the library, but depending on how the future is created (see `getFutureResult` above), either a move or a reference is performed when retrieving the value.
 
+## Task Requirements
 
-## Приложение для рекомендаций (только 1 и 2 поток)
+- Callable object: https://en.cppreference.com/w/cpp/named_req/Callable
+- Any number of arguments is supported.
+- A task can be a pointer-to-member function. In this case, the first argument is the instance on which the method is invoked.
+- `task.apply(func)` can be used only if `func` accepts exactly one argument. You may extend this to multiple arguments, e.g., when a task returns `std::tuple<Ts...>`.
 
-Используя реализованный вами TTaskScheduler, необходимо написать приложение, которое:
-1. Узнает ваше местоположение
-2. По местоположению:
-    - Определит погоду
-    - Найдёт все интересные места рядом: музеи, парки, рестораны и т. д. (на ваше усмотрение)
-3. Основываясь на погоде выберет интересные места (нелогично рекомендовать гулять по парку, если будет ливень)
-4. Выведет краткую сводку про погоду и N мест, куда рекомендуется сходить, и расстояние до них
+## Example App: Recommendations
 
-Можно выбрать любые API; вот те, что уже подобрали для вас:
-1. [2ip](https://2ip.ru/free/) &mdash; для определения долготы и широты по IP-адресу
-2. [Яндекс.Погода](https://yandex.ru/dev/weather/#start)
-3. [Поиск по Яндекс.Картам](https://yandex.ru/maps-api/docs/geosearch-api/index.html)
-4. [Матрицы расстояний](https://yandex.ru/maps-api/docs/distancematrix-api/index.html) или [Получение деталей маршрута](https://yandex.ru/maps-api/docs/router-api/index.html)
+Using the implemented Task Scheduler, you can build a small app that:
+1. Detects your location.
+2. From the location:
+   - Determines the weather.
+   - Finds nearby interesting places: museums, parks, restaurants, etc.
+3. Based on the weather, selects appropriate places (e.g., avoid parks during heavy rain).
+4. Prints a short weather summary and N recommended places with distances.
 
-## Ограничения
+You can use any APIs. Examples include:
+1. 2ip - to determine latitude and longitude by IP address: https://2ip.ru/free/
+2. Yandex Weather: https://yandex.ru/dev/weather/#start
+3. Yandex Maps Geosearch: https://yandex.ru/maps-api/docs/geosearch-api/index.html
+4. Distance Matrix or Route Details: https://yandex.ru/maps-api/docs/distancematrix-api/index.html and https://yandex.ru/maps-api/docs/router-api/index.html
 
- Запрещено использовать стандартную библиотеку, за исключением [контейнеров](https://en.cppreference.com/w/cpp/container) и [умных указателей](https://en.cppreference.com/w/cpp/memory).
+## Constraints
 
-## Тесты
+The core implementation is designed to avoid most of the standard library except for containers and smart pointers:
+- Containers: https://en.cppreference.com/w/cpp/container
+- Smart pointers: https://en.cppreference.com/w/cpp/memory
 
-Код библиотеки должен быть покрыт тестами. Тесты являются частью задания. Качество написанных тестов и покрытие кода тестами влияют на итоговую оценку.
+## Testing
 
-## NB
+The library should be covered by tests. Focus on both correctness and the breadth of test coverage for the critical code paths.
 
-1. В данной работе могут быть использованы идеи [Type Erasure](https://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Type_Erasure), которые мы разбирали на лекции
-2. Мы поговорили с вами про std::forward, подумайте над тем, где это может быть применимо в данной задаче
-3. Получаемые расписания не всегда могут быть выполнимы; предлагается подумать, что делать в таких ситуациях
-4. Качество рекомендации не является частью оценки. Главное, что от вас ожидается &mdash; применение вашей библиотеки в реальном сценарии.
-5. Для упрощения парсинга json обратите внимание на [макросы в библиотеке nlohmann](https://json.nlohmann.me/features/arbitrary_types/#simplify-your-life-with-macros)
-6. Также, при желании, некоторые задания можно выполнять [асинхронно](https://www.geeksforgeeks.org/javascript/synchronous-and-asynchronous-programming/) (NB: это не является частью задания).
+## Notes
 
-## ТеорМин
-
-1. Value categories
-2. RValue reference
-3. Move Semantics
-4. Perfect Forwarding
-5. Variadic templates
-
-## Deadline
-
-| Deadline | Date | Coeff | Branch      |
-|-----------|-----------------|--------|-------------|
-| 0         | 29.04.26 23:59  | 1.0    | deadline_0  |
-| 1         | 06.05.26 23:59  | 0.8    | deadline_1  |
-| 2         | 13.05.26 23:59  | 0.65   | deadline_2  |
-| 3         | 21.05.26 00:00  | 0.5    | deadline_3  |
-
-
-Максимальное количество баллов — 12
+1. You can leverage ideas from Type Erasure: https://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Type_Erasure
+2. Consider where `std::forward` and perfect forwarding are appropriate in this design.
+3. Some schedules may be invalid or not executable; think about error handling and detection.
+4. The recommendation app is meant as a practical showcase for the library, not as an exercise in ranking quality.
+5. For simpler JSON parsing, consider the nlohmann JSON macros: https://json.nlohmann.me/features/arbitrary_types/#simplify-your-life-with-macros
+6. Where appropriate, some tasks may be executed asynchronously.
